@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KalaKrut LeadGen Chat Agent</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
+        }
+        .chat-container {
+            width: 400px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            max-height: 80vh;
+        }
+        .chat-header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px;
+            font-size: 1.2em;
+            text-align: center;
+        }
+        .chat-box {
+            flex-grow: 1;
+            padding: 15px;
+            overflow-y: auto;
+            border-bottom: 1px solid #eee;
+            scroll-behavior: smooth;
+        }
+        .message {
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+        .user-message {
+            text-align: right;
+        }
+        .user-message span {
+            background-color: #e0f7fa;
+            padding: 8px 12px;
+            border-radius: 15px;
+            display: inline-block;
+            max-width: 80%;
+        }
+        .agent-message {
+            text-align: left;
+        }
+        .agent-message span {
+            background-color: #fce4ec;
+            padding: 8px 12px;
+            border-radius: 15px;
+            display: inline-block;
+            max-width: 80%;
+        }
+        .chat-input {
+            display: flex;
+            padding: 15px;
+            border-top: 1px solid #eee;
+        }
+        .chat-input input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+        .chat-input button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .chat-input button:hover {
+            background-color: #45a049;
+        }
+        .loading-indicator {
+            text-align: center;
+            margin-top: 10px;
+            color: #888;
+            font-style: italic;
+            display: none; /* Hidden by default */
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">KalaKrut LeadGen Agent</div>
+        <div class="chat-box" id="chatBox">
+            <div class="agent-message message"><span>Hello! How can I help you with our artists and albums today?</span></div>
+        </div>
+        <div class="loading-indicator" id="loadingIndicator">Agent is typing...</div>
+        <div class="chat-input">
+            <input type="text" id="userInput" placeholder="Ask about an artist or album..." autocomplete="off">
+            <button id="sendButton">Send</button>
+        </div>
+    </div>
+
+    <script>
+        // --- IMPORTANT: Replace with your actual deployed Web app URL ---
+        const webAppUrl = 'https://script.google.com/macros/s/AKfycbwUQq3ryH3voyZeiOIx2l3WwI5cRRoI9-BF05e4gDDFR9FLsFDqjhYK1_s4mV4lveM3-A/exec'; 
+        // Example: 'https://script.google.com/macros/s/AKfycbz_YOUR_ID_HERE_j4S/exec';
+
+        const chatBox = document.getElementById('chatBox');
+        const userInput = document.getElementById('userInput');
+        const sendButton = document.getElementById('sendButton');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+
+        // Function to add a message to the chat box
+        function addMessage(sender, text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message');
+            messageDiv.classList.add(sender === 'user' ? 'user-message' : 'agent-message');
+            const span = document.createElement('span');
+            span.textContent = text;
+            messageDiv.appendChild(span);
+            chatBox.appendChild(messageDiv);
+            chatBox.scrollTop = chatBox.scrollHeight; // Scroll to bottom
+        }
+
+        // The core function to send query to your Apps Script API
+        async function sendQueryToAgent(query) {
+            loadingIndicator.style.display = 'block'; // Show loading indicator
+            try {
+                const response = await fetch(webAppUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query: query }),
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+                }
+
+                const data = await response.json();
+                console.log('Agent Response:', data.response);
+                return data.response;
+            } catch (error) {
+                console.error('Error sending query to agent:', error);
+                return 'Sorry, I am having trouble connecting to the agent. Please try again later.';
+            } finally {
+                loadingIndicator.style.display = 'none'; // Hide loading indicator
+            }
+        }
+
+        // Event listener for the Send button
+        sendButton.addEventListener('click', async () => {
+            const query = userInput.value.trim();
+            if (query) {
+                addMessage('user', query);
+                userInput.value = ''; // Clear input field
+
+                const agentResponse = await sendQueryToAgent(query);
+                addMessage('agent', agentResponse);
+            }
+        });
+
+        // Event listener for Enter key in the input field
+        userInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                sendButton.click(); // Trigger the send button click
+            }
+        });
+
+        // Initial welcome message (already in HTML, but can be added via JS if preferred)
+        // addMessage('agent', 'Hello! How can I help you with our artists and albums today?');
+
+    </script>
+</body>
+</html>
