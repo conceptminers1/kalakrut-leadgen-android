@@ -53,4 +53,4 @@ Pull requests are welcome. For major changes, please open an issue first.
 
 ## License
 
-Distributed under the [MIT License](LICENSE).
+Distributed under the Artistic-2.0
